@@ -11,22 +11,9 @@ import {Order} from 'blockly/javascript';
 // This file has no side effects!
 export const forBlock = Object.create(null);
 
-forBlock['add_text'] = function (block, generator) {
+forBlock['comment'] = function (block, generator) {
   const text = generator.valueToCode(block, 'TEXT', Order.NONE) || "''";
-  const addText = generator.provideFunction_(
-    'addText',
-    `function ${generator.FUNCTION_NAME_PLACEHOLDER_}(text) {
-
-  // Add text to the output area.
-  const outputDiv = document.getElementById('output');
-  const textEl = document.createElement('p');
-  textEl.innerText = text;
-  outputDiv.appendChild(textEl);
-}`,
-  );
-  // Generate the function call for this block.
-  const code = `${addText}(${text});\n`;
-  return code;
+  return `//${text}\n`;
 };
 forBlock['discord_send_message'] = function (block, generator) {
   const message = generator.valueToCode(block, 'MESSAGE', Order.NONE) || "''";
