@@ -493,7 +493,7 @@ export const toolbox = {
         },
         {
           kind: 'block',
-          type: 'add_text',
+          type: 'comment',
           inputs: {
             TEXT: {
               shadow: {
