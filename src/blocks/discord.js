@@ -10,9 +10,9 @@ import * as Blockly from 'blockly/core';
 // text to the output div on the sample app.
 // This is just an example and you should replace this with your
 // own custom blocks.
-const addText = {
-  type: 'add_text',
-  message0: 'Add text %1',
+const comment = {
+  type: 'comment',
+  message0: 'Comment %1',
   args0: [
     {
       type: 'input_value',
@@ -242,5 +242,5 @@ const whiteSpace = {
 // This does not register their definitions with Blockly.
 // This file has no side effects!
 export const blocks = Blockly.common.createBlockDefinitionsFromJsonArray([
-  addText, sendMessage, discordSnowflake, onServerMessage, whiteSpace, onServerReact, onBotCreate, onBotReady, isBot, addRole
+  comment, sendMessage, discordSnowflake, onServerMessage, whiteSpace, onServerReact, onBotCreate, onBotReady, isBot, addRole
 ]);
