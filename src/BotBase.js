@@ -37,9 +37,12 @@ export class Bot {
 	TOKEN = "";
 	EventHandler = {};
 	initialized = false;
+	async isOnline() { try { const res = await fetch("https://httpbin.org/get"); return res.ok; } catch { return false; } }
 	async Connect (reconnect) {
 		if (this.HeartBeat.socket) if (this.HeartBeat.socket.readyState === 1) this.HeartBeat.socket.close();
 		if (this.HeartBeat.loop) this.HeartBeat.loop = clearInterval(this.HeartBeat.loop);
+		this.initialized = false;
+		if (await this.isOnline() !== true) return await this.Connect();
 		let url_gateway;
 		if (!reconnect) {
 			if (!this.HeartBeat.base_url) {
