@@ -40,6 +40,7 @@ export class Bot {
 	initialized = false;
 	async isOnline() { try { const res = await fetch("https://httpbin.org/get"); return res.ok; } catch { return false; } }
 	async Connect (reconnect) {
+		this.queue = [];
 		if (this.HeartBeat.socket) if (this.HeartBeat.socket.readyState === 1) this.HeartBeat.socket.close();
 		if (this.HeartBeat.loop) this.HeartBeat.loop = clearInterval(this.HeartBeat.loop);
 		this.initialized = false;
@@ -120,7 +121,6 @@ export class Bot {
 	}
 	async OnSocketOpen (event) {
 		console.log("open", event);
-		if (this.queue.length > 0) this.SendHeartBeat(), this.queue = [];
 	}
 	OnSocketMessage (event) {
 		const data = JSON.parse(event.data);
