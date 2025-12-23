@@ -33,6 +33,7 @@ export class Bot {
 			}
 		}
 	};
+	queue = [];
 	cache = {};
 	TOKEN = "";
 	EventHandler = {};
@@ -72,14 +73,17 @@ export class Bot {
 		}		
 
 	}
-	SendHeartBeat () {
-		if (!this.HeartBeat.received) this.Connect();
+	SendHeartBeat (instant) {
+		if (this.HeartBeat.socket.readyState !== 1) return;
+		if (this.queue.length > 2) return this.Connect();
+		if (!this.HeartBeat.received) return this.queue.push(true);
 		this.HeartBeat.socket.send(JSON.stringify(this.HeartBeat.data));
 		this.HeartBeat.received = false;
 	}
 	StartHeartBeat (data) {
 		this.HeartBeat.interval = data.heartbeat_interval;
 		this.HeartBeat.loop = setInterval(this.SendHeartBeat.bind(this), this.HeartBeat.interval);
+		this.SendHeartBeat();
 	}
 	async Request (url, body, method) {
 		try {
@@ -108,11 +112,15 @@ export class Bot {
 	async SendGuildMessage (content, channel) {
 		await this.Request(`channels/${channel}/messages`, {content}, "POST");
 	}
+	async ModifyGuildMessage (content, channel, message, method) {
+		await this.Request(`channels/${channel}/messages/${message}`, {content}, method);
+	}
 	async RoleForUser (user, guild, role, method) {
 		await this.Request(`guilds/${guild}/members/${user}/roles/${role}`, {}, method); //PUT and DELETE
 	}
-	OnSocketOpen (event) {
+	async OnSocketOpen (event) {
 		console.log("open", event);
+		if (this.queue.length > 0) this.SendHeartBeat(), this.queue = [];
 	}
 	OnSocketMessage (event) {
 		const data = JSON.parse(event.data);
@@ -133,6 +141,7 @@ export class Bot {
 		if (data.op === 10) this.StartHeartBeat(data.d);
 		if (data.op === 11) {
 			this.HeartBeat.received = true;
+			this.queue = [];
 			if (!this.initialized) this.IdentifyBot();
 		}
 		if (this.EventHandler[data.t]) this.EventHandler[data.t](data.d);
