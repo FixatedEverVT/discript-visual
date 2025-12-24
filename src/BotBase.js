@@ -42,12 +42,12 @@ export class Bot {
 	initialized = false;
 	async isOnline() { try { const res = await fetch("https://httpbin.org/get"); return res.ok; } catch { return false; } }
 	async Sleep(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
-	async Connect (reconnect) {
+	async Connect (reconnect, extra = 1) {
 		if (this.HeartBeat.connecting) return;
 		this.HeartBeat.step = Math.random();
 		this.HeartBeat.beats = 0;
 		this.HeartBeat.connecting = true;
-		await this.Sleep(5000);
+		await this.Sleep(5000 * extra);
 		this.queue = [];
 		if (this.HeartBeat.socket) if (this.HeartBeat.socket.readyState === 1) this.HeartBeat.socket.close();
 		if (this.HeartBeat.loop) this.HeartBeat.loop = clearInterval(this.HeartBeat.loop);
@@ -163,9 +163,9 @@ export class Bot {
 		if (this.EventHandler[data.t]) this.EventHandler[data.t](data.d);
 	}
 	OnSocketClose (event) {
-		this.HeartBeat.connecting = false;
-		if (this.HeartBeat.beats < 5) return this.Connect();
 		console.log("close", event, event.data);
+		this.HeartBeat.connecting = false;
+		if (this.HeartBeat.beats < 5) return this.Connect(false, 6-this.HeartBeat.beats);
 		if (this.HeartBeat.resume_url) this.Connect(true);
 		else return this.Connect();
 	}
