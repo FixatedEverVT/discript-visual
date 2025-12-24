@@ -153,11 +153,11 @@ export class Bot {
 		}
 		if (data.op === 10) {
 			this.StartHeartBeat(data.d);
-			this.IdentifyBot(this.HeartBeat.step);
 		}
 		if (data.op === 11) {
 			this.HeartBeat.received = true;
 			this.queue = [];
+			if (!this.initialized) this.IdentifyBot(this.HeartBeat.step);
 			this.HeartBeat.beats++;
 		}
 		if (this.EventHandler[data.t]) this.EventHandler[data.t](data.d);
