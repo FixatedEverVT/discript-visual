@@ -4,12 +4,14 @@ export class Bot {
 			op: 1,
 			d: null
 		},
+		step: null,
 		resume_url: null,
 		base_url: null,
 		loop: null,
 		socket: null,
 		interval: null,
-		received: true
+		received: true,
+		beats: 0
 	};
 	CachedPayloads = {
 		identify: {
@@ -42,6 +44,8 @@ export class Bot {
 	async Sleep(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
 	async Connect (reconnect) {
 		if (this.HeartBeat.connecting) return;
+		this.HeartBeat.step = Math.random();
+		this.HeartBeat.beats = 0;
 		this.HeartBeat.connecting = true;
 		await this.Sleep(5000);
 		this.queue = [];
@@ -54,9 +58,10 @@ export class Bot {
 		}
 		let url_gateway;
 		if (!reconnect) {
+			this.CachedPayloads.resume.d.seq = null;
+			this.HeartBeat.data.d = null;
+			this.HeartBeat.resume_url = null;
 			if (!this.HeartBeat.base_url) {
-				this.CachedPayloads.resume.d.seq = null;
-				this.HeartBeat.data.d = null;
 				const gateway = await fetch('https://discord.com/api/gateway');
 				if (!gateway.ok) throw new Error(`HTTP error! status: ${gateway.status}`);
 				url_gateway = await gateway.json();
@@ -73,14 +78,14 @@ export class Bot {
 		this.HeartBeat.socket.addEventListener('close', this.OnSocketClose.bind(this));
 		this.HeartBeat.socket.addEventListener('error', this.OnSocketError.bind(this));
 	}
-	IdentifyBot () {
-		if (this.initialized) return;
+	IdentifyBot (step) {
+		if (this.initialized || this.HeartBeat.step !== step) return;
+		if (this.HeartBeat.socket.readyState !== 1) return setTimeout(()=>this.IdentifyBot(step),1000);
 		if (this.HeartBeat.resume_url) {
 			this.HeartBeat.socket.send(JSON.stringify(this.CachedPayloads.resume));
 		} else {
 			this.HeartBeat.socket.send(JSON.stringify(this.CachedPayloads.identify));
 		}		
-
 	}
 	SendHeartBeat (instant) {
 		if (this.HeartBeat.socket.readyState !== 1) return;
@@ -144,23 +149,25 @@ export class Bot {
 		if (data.op === 1) this.SendHeartBeat();
 		if (data.op === 7) this.Connect(true);
 		if (data.op === 9) {
-			this.HeartBeat.resume_url = false;
 			this.Connect();
 		}
 		if (data.op === 10) {
 			this.StartHeartBeat(data.d);
-			this.IdentifyBot();
+			this.IdentifyBot(this.HeartBeat.step);
 		}
 		if (data.op === 11) {
 			this.HeartBeat.received = true;
 			this.queue = [];
+			this.HeartBeat.beats++;
 		}
 		if (this.EventHandler[data.t]) this.EventHandler[data.t](data.d);
 	}
 	OnSocketClose (event) {
 		this.HeartBeat.connecting = false;
+		if (this.HeartBeat.beats < 5) return this.Connect();
 		console.log("close", event, event.data);
 		if (this.HeartBeat.resume_url) this.Connect(true);
+		else return this.Connect();
 	}
 	OnSocketError(event) {
 		this.HeartBeat.connecting = false;
